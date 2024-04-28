@@ -22,6 +22,8 @@ def depositar(saldo, valor, extrato, /):
         print("\n=== Depósito realizado com sucesso! ===")
     else:
         print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+        print("O deposito foi realizado com sucesso.")
+        
 
     return saldo, extrato
 
