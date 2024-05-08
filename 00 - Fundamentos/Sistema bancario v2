@@ -1,0 +1,147 @@
+import textwrap
+
+class Usuario:
+    def __init__(self, nome, cpf):
+        self.nome = nome
+        self.cpf = cpf
+
+class ContaBancaria:
+    def __init__(self, agencia, numero_conta, usuario):
+        self.agencia = agencia
+        self.numero_conta = numero_conta
+        self.usuario = usuario
+        self.saldo = 0
+        self.numero_saques = 0
+        self.extrato = []
+
+    def depositar(self, valor):
+        if valor > 0:
+            self.saldo += valor
+            self.extrato.append(f"Depósito de R$ {valor:.2f} na conta {self.agencia}/{self.numero_conta} - {self.usuario.nome}\n")
+            return self.extrato[-1]
+        else:
+            return "Operação falhou! O valor informado é inválido."
+
+    def sacar(self, valor):
+        if valor > self.saldo:
+            return "Operação falhou! Você não tem saldo suficiente."
+        else:
+            self.saldo -= valor
+            self.numero_saques += 1
+            self.extrato.append(f"Saque de R$ {valor:.2f} na conta {self.agencia}/{self.numero_conta} - {self.usuario.nome}\n")
+            return self.extrato[-1]
+
+class ContaCorrenteSimples(ContaBancaria):
+    def __init__(self, agencia, numero_conta, usuario):
+        super().__init__(agencia, numero_conta, usuario)
+        self.LIMITE_SAQUES = 3
+
+class ContaCorrenteEspecial(ContaBancaria):
+    def __init__(self, agencia, numero_conta, usuario):
+        super().__init__(agencia, numero_conta, usuario)
+        self.LIMITE_SAQUES = 5
+
+class Banco:
+    def __init__(self):
+        self.usuarios = []
+        self.contas = []
+        self.AGENCIA = "0001"
+
+    def criar_usuario(self, nome, cpf):
+        self.usuarios.append(Usuario(nome, cpf))
+
+    def filtrar_usuario(self, cpf):
+        for usuario in self.usuarios:
+            if usuario.cpf == cpf:
+                return usuario
+        return None
+
+    def criar_conta(self, cpf, numero_conta, tipo_conta):
+        usuario = self.filtrar_usuario(cpf)
+        if usuario:
+            if tipo_conta == "simples":
+                nova_conta = ContaCorrenteSimples(self.AGENCIA, numero_conta, usuario)
+            elif tipo_conta == "especial":
+                nova_conta = ContaCorrenteEspecial(self.AGENCIA, numero_conta, usuario)
+            else:
+                return "Tipo de conta inválido."
+            self.contas.append(nova_conta)
+            return "Conta criada com sucesso."
+        else:
+            return "Usuário não encontrado."
+
+    def sacar(self, cpf, numero_conta, valor):
+        for conta in self.contas:
+            if conta.usuario.cpf == cpf and conta.numero_conta == numero_conta:
+                return conta.sacar(valor)
+
+    def exibir_extrato(self, cpf, numero_conta):
+        for conta in self.contas:
+            if conta.usuario.cpf == cpf and conta.numero_conta == numero_conta:
+                print("\n================ EXTRATO ================")
+                for movimentacao in conta.extrato:
+                    print(movimentacao)
+                print(f"\nSaldo: R$ {conta.saldo:.2f}")
+                print("==========================================")
+
+
+def menu():
+    menu_text = """\n
+    ====================MENU=================
+    [d]\tDepositar
+    [s]\tSacar
+    [e]\tExtrato
+    [nc]\tNova conta
+    [lc]\tListar contas
+    [nu]\tNovo usuário 
+    [q]\tSair
+    => """
+    return input(textwrap.dedent(menu_text))
+
+def main():
+    banco = Banco()
+
+    while True:
+        opcao = menu()
+
+        if opcao == "d":
+            cpf = input("Informe o CPF: ")
+            numero_conta = input("Informe o número da conta: ")
+            valor = float(input("Informe o valor do depósito: "))
+            extrato = banco.depositar(cpf, numero_conta, valor)
+            print(extrato)
+
+        elif opcao == "s":
+            cpf = input("Informe o CPF: ")
+            numero_conta = input("Informe o número da conta: ")
+            valor = float(input("Informe o valor do saque: "))
+            extrato = banco.sacar(cpf, numero_conta, valor)
+            print(extrato)
+
+        elif opcao == "e":
+            cpf = input("Informe o CPF: ")
+            numero_conta = input("Informe o número da conta: ")
+            banco.exibir_extrato(cpf, numero_conta)
+
+        elif opcao == "nu":
+            nome = input("Informe o nome do usuário: ")
+            cpf = input("Informe o CPF do usuário: ")
+            banco.criar_usuario(nome, cpf)
+
+        elif opcao == "nc":
+            cpf = input("Informe o CPF do titular da conta: ")
+            numero_conta = input("Informe o número da conta: ")
+            tipo_conta = input("Informe o tipo de conta (simples/especial): ")
+            print(banco.criar_conta(cpf, numero_conta, tipo_conta))
+
+        elif opcao == "lc":
+            banco.listar_contas()
+
+        elif opcao == "q":
+            break
+
+        else:
+            print("Operação inválida, por favor selecione novamente a operação desejada.")
+
+if __name__ == "__main__":
+    main()
